@@ -1,16 +1,78 @@
-# This is a sample Python script.
+from flask import Flask, request, jsonify, render_template, send_file, Response
+import os
+import base64
+import main
 
-# Press Shift+F10 to execute it or replace it with your code.
-# Press Double Shift to search everywhere for classes, files, tool windows, actions, and settings.
+import pandas
+import pymysql
+from io import StringIO
+
+import multiple_clustering
+import multiple_prediction
+
+os.environ['KMP_DUPLICATE_LIB_OK'] = 'True'
+output_path = '' # write your output path
+app = Flask(__name__)
+conn = pymysql.connect(host='localhost', port=3307, user='root', password='12345', db='enc')
+
+@app.route("/")
+def index():
+    return "<h1>SurMoonVey ML service</h1>"
+
+@app.route('/csv/<int:user_id>/<int:survey_id>', methods=['GET', 'POST'])
+def csv(user_id=None, survey_id=None):
+    output_stream = StringIO()
+
+    sql = "select (%d) from response" % survey_id
+    result = pandas.read_sql_query(sql, conn)
+    #result.to_csv('result.csv', index=False)
+    result.to_csv(output_stream)
+
+    response = Response(
+            output_stream.getvalue(),
+            mimetype='text/csv',
+            content_type='application/octet-stream',
+        )
+    response.headers["Content-Disposition"] = "attachment; filename=Survey_result.csv"
+    return response
+
+"""
+    return send_file('result.csv',
+                     mimetype='text/csv',
+                     attachment_filename='Survey_result.csv',
+                     as_attachment=True)
+"""
+
+"""
+Json 예상도
+key_question : 1
+select_question : [ 2, 3, 4 ...] 
+"""
+
+@app.route('/clustering/<int:user_id>/<int:survey_id>/', methods=['GET', 'POST'])
+def multiple_cl(user_id=None, survey_id=None):
+    data = request.get_json()
+
+    sql = 'SELECT * FROM response where ', data
+    result = pandas.read_sql_query(sql, conn)
+    result.to_csv('result.csv', index=False)
+
+    multiple_clustering()
 
 
-def print_hi(name):
-    # Use a breakpoint in the code line below to debug your script.
-    print(f'Hi, {name}')  # Press Ctrl+F8 to toggle the breakpoint.
+@app.route('/prediction/<int:user_id>/<int:survey_id>/', methods=['GET', 'POST'])
+def multiple_pr(user_id=None, survey_id=None):
+    data = request.get_json()
+
+    sql = 'SELECT * FROM response where ', data
+    result = pandas.read_sql_query(sql, conn)
+    result.to_csv('result.csv', index=False)
+
+    multiple_prediction()
 
 
-# Press the green button in the gutter to run the script.
-if __name__ == '__main__':
-    print_hi('PyCharm')
 
-# See PyCharm help at https://www.jetbrains.com/help/pycharm/
+if __name__ == "__main__":
+    WSGIRequestHandler.protocol_version = "HTTP/1.1"
+    app.run(threaded=True, host='127.0.0.1', port=8081)
+    ALLOWED_HOSTS = ["*"]
