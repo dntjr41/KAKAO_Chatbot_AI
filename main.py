@@ -2,18 +2,31 @@ from flask import Flask, request, jsonify, render_template, send_file, Response
 import os
 import base64
 import main
+from werkzeug.serving import WSGIRequestHandler
 
 import pandas
 import pymysql
 from io import StringIO
+from flask import Flask
+from flask_restx import Api, Resource, reqparse
 
 import multiple_clustering
 import multiple_prediction
 
+import subject_keyword
+import subject_sentiment
+
 os.environ['KMP_DUPLICATE_LIB_OK'] = 'True'
 output_path = '' # write your output path
 app = Flask(__name__)
-conn = pymysql.connect(host='localhost', port=3307, user='root', password='12345', db='enc')
+api = Api(app, version='1.0', title='Surmoonvey AI Document', description='Swagger 문서', doc="/api-docs")
+
+# 테스트
+test_api = api.namespace('test', description='조회 API')
+
+
+# conn = pymysql.connect(host='localhost', port=3307, user='root', password='12345', db='enc')
+conn = pymysql.connect(host='localhost', port=3306, user='root', password='1234', db='survey')
 
 @app.route("/")
 def index():
@@ -57,7 +70,7 @@ def multiple_cl(user_id=None, survey_id=None):
     result = pandas.read_sql_query(sql, conn)
     result.to_csv('result.csv', index=False)
 
-    multiple_clustering()
+    # multiple_clustering()
 
 
 @app.route('/prediction/<int:user_id>/<int:survey_id>/', methods=['GET', 'POST'])
@@ -68,7 +81,19 @@ def multiple_pr(user_id=None, survey_id=None):
     result = pandas.read_sql_query(sql, conn)
     result.to_csv('result.csv', index=False)
 
-    multiple_prediction()
+    # multiple_prediction()
+
+
+@app.route('/sentiment/<int:user_id>/<int:survey_id>/', methods=['GET', 'POST'])
+def subject_se(user_id=None, survey_id=None):
+
+    subject_sentiment()
+
+
+@app.route('/keyword/<int:user_id>/<int:survey_id>/', methods=['GET', 'POST'])
+def subject_ke(user_id=None, survey_id=None):
+
+    subject_keyword()
 
 
 
