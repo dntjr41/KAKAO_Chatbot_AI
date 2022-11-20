@@ -16,6 +16,14 @@ import multiple_prediction
 import subject_keyword
 import subject_sentiment
 
+import py_eureka_client.eureka.client as eureka_client
+
+rest_port = 8086
+eureka_client.init(eureka_server="http://localhost:8080/eureka",
+                   app_name="surmoonvey-ai",
+                   instance_port=rest_port)
+
+
 os.environ['KMP_DUPLICATE_LIB_OK'] = 'True'
 output_path = '' # write your output path
 app = Flask(__name__)
@@ -32,7 +40,7 @@ conn = pymysql.connect(host='localhost', port=3306, user='root', password='1234'
 def index():
     return "<h1>SurMoonVey ML service</h1>"
 
-@app.route('/csv/<int:user_id>/<int:survey_id>', methods=['GET', 'POST'])
+@app.route('api/csv/<int:survey_id>', methods=['GET', 'POST'])
 def csv(user_id=None, survey_id=None):
     output_stream = StringIO()
 
@@ -62,7 +70,7 @@ key_question : 1
 select_question : [ 2, 3, 4 ...] 
 """
 
-@app.route('/clustering/<int:user_id>/<int:survey_id>/', methods=['GET', 'POST'])
+@app.route('api/clustering/<int:survey_id>/', methods=['GET', 'POST'])
 def multiple_cl(user_id=None, survey_id=None):
     data = request.get_json()
 
@@ -73,7 +81,7 @@ def multiple_cl(user_id=None, survey_id=None):
     # multiple_clustering()
 
 
-@app.route('/prediction/<int:user_id>/<int:survey_id>/', methods=['GET', 'POST'])
+@app.route('api/prediction/<int:survey_id>/', methods=['GET', 'POST'])
 def multiple_pr(user_id=None, survey_id=None):
     data = request.get_json()
 
@@ -84,13 +92,13 @@ def multiple_pr(user_id=None, survey_id=None):
     # multiple_prediction()
 
 
-@app.route('/sentiment/<int:user_id>/<int:survey_id>/', methods=['GET', 'POST'])
+@app.route('api/sentiment/<int:user_id>/<int:survey_id>/', methods=['GET', 'POST'])
 def subject_se(user_id=None, survey_id=None):
 
     subject_sentiment()
 
 
-@app.route('/keyword/<int:user_id>/<int:survey_id>/', methods=['GET', 'POST'])
+@app.route('api/keyword/<int:user_id>/<int:survey_id>/', methods=['GET', 'POST'])
 def subject_ke(user_id=None, survey_id=None):
 
     subject_keyword()
@@ -99,5 +107,5 @@ def subject_ke(user_id=None, survey_id=None):
 
 if __name__ == "__main__":
     WSGIRequestHandler.protocol_version = "HTTP/1.1"
-    app.run(threaded=True, host='127.0.0.1', port=8081)
+    app.run(threaded=True, host='127.0.0.1', port=rest_port)
     ALLOWED_HOSTS = ["*"]
