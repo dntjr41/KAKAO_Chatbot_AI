@@ -4,6 +4,7 @@
 import sys
 import requests
 import json
+import pandas as pd
 
 client_id = "hhckdn2v5m"
 client_secret = "5KfiupCfN3iJxVnDj2Be7L1xixED5ZHStlZObpMi"
@@ -15,17 +16,53 @@ headers = {
     "Content-Type": "application/json"
 }
 
-content = "여기에 문장이 들어가야함"
-data = {
-    "content": content
-}
+def subject_sentiment(params):
 
-print(json.dumps(data, indent=4, sort_keys=True))
-response = requests.post(url, data=json.dumps(data), headers=headers)
-rescode = response.status_code
+    df = pd.json_normalize(params)
+    df = df[['questionId', 'questionOrder', 'type', 'title']]
+    df_answer = pd.json_normalize(params, record_path=['answers'])
+    df_answer = df_answer[['value']]
+    df_use = pd.concat([df, df_answer], axis=1)
+    df_use = df_use[df_use['type'] == 4]
 
-if (rescode == 200):
-    print (response.text)
+    list_questionId = df_use['questionId'].values.tolist()
+    list_questionId = list(set(list_questionId))
 
-else:
-    print("Error : " + response.test)
+    # dataframe 전체 확인
+    # pd.set_option("display.max_rows", None, "display.max_columns", None)
+    # print(df_use)
+    # print('list')
+    # print(list_questionId)
+
+    sentiment_result = pd.DataFrame(index=['questionId', 'sentiment'])
+    temp_content = ""
+
+    for k in list_questionId:
+        for h in range(len(df_use)):
+            df_temp = df_use.iloc[h, :]
+            if df_temp['questionId'] == k:
+                temp_content = temp_content + " " + df_temp['value']
+
+        content = temp_content
+        data = {
+            "content": content
+        }
+
+        # print(json.dumps(data, indent=4, sort_keys=True))
+        response = requests.post(url, data=json.dumps(data), headers=headers)
+        rescode = response.status_code
+
+        if (rescode == 200):
+            print(response.text)
+
+        else:
+            print("Error : " + response.text)
+
+        use_temp = json.loads(response.text)
+        sentiment_result = sentiment_result.append({'questionId':k, 'sentiment': use_temp['document']}, ignore_index=True)
+        temp_content = ""
+
+    sentiment_result = sentiment_result.dropna(axis=0)
+    sentiment_result = sentiment_result.reset_index(drop=True)
+
+    return sentiment_result

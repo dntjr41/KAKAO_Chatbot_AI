@@ -1,3 +1,4 @@
+import pandas as pd
 from flask import Flask, request, jsonify, render_template, send_file, Response
 import os
 import base64
@@ -13,12 +14,13 @@ from flask_restx import Api, Resource, reqparse
 # import multiple_clustering
 # import multiple_prediction
 
-# import subject_keyword
-# import subject_sentiment
+import subject_keyword
+import subject_sentiment
 
 # import py_eureka_client.eureka_client as eureka_client
 
 rest_port = 8087
+
 '''
 eureka_client.init(eureka_server="http://localhost:8761/eureka",
                    app_name="surmoonvey-ai",
@@ -42,12 +44,26 @@ conn = pymysql.connect(host='localhost', port=3306, user='root', password='1234'
 def index():
     return "<h1>SurMoonVey ML service</h1>"
 
+# Return Dataframe 형태
+# questionId sentiment keyword
+# 이 데이터프레임을 json으로 변환하여 다시 react로 전송
+
 @app.route('/react_to_flask', methods=['POST'])
 def react_to_flask():
     print(request.is_json)
     params = request.get_json()
     print(params)
-    return 'ok'
+
+    result = pandas.DataFrame()
+    subject_se = subject_sentiment.subject_sentiment(params)
+    subject_ke = subject_keyword.subject_keyword(params)
+
+    pandas.set_option("display.max_rows", None, "display.max_columns", None)
+    result = pd.merge(subject_se, subject_ke)
+    print(result)
+
+
+    return result.to_json()
 
 '''
 @app.route('api/csv/<int:survey_id>', methods=['GET', 'POST'])
@@ -100,19 +116,6 @@ def multiple_pr(user_id=None, survey_id=None):
     result.to_csv('result.csv', index=False)
 
     # multiple_prediction()
-
-
-@app.route('api/sentiment/<int:user_id>/<int:survey_id>/', methods=['GET', 'POST'])
-def subject_se(user_id=None, survey_id=None):
-
-    subject_sentiment()
-
-
-@app.route('api/keyword/<int:user_id>/<int:survey_id>/', methods=['GET', 'POST'])
-def subject_ke(user_id=None, survey_id=None):
-
-    subject_keyword()
-
 '''
 
 if __name__ == "__main__":

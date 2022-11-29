@@ -16,21 +16,66 @@ curl -L -X POST '{API Endpoint URL}' \
 import sys
 import requests
 import json
+import pandas as pd
 
 client_secret = "f2bfcd561f6cb2b831e05c72d9b1f1c3"
 url = "https://60520ecf-9f3b-4709-a575-dd199defbcf4.api.kr-central-1.kakaoi.io/ai/nlp/afc1cf3b457f45889aedb98a80c1209b"
 language = "ko"
 
+headers = {
+    "x-api-key": client_secret,
+    "Content-Type": "application/json"
+}
 
-'''
-curl -L -X POST 'https://60520ecf-9f3b-4709-a575-dd199defbcf4.api.kr-central-1.kakaoi.io/ai/nlp/afc1cf3b457f45889aedb98a80c1209b' \
-    -H 'x-api-key: f2bfcd561f6cb2b831e05c72d9b1f1c3' \
-    -H 'Content-Type: application/json' \
-    -d '{
-       "sentences": [
+def subject_keyword(params):
 
-       ],
-       "lang": "ko"
-    }'
+    df = pd.json_normalize(params)
+    df = df[['questionId', 'questionOrder', 'type', 'title']]
+    df_answer = pd.json_normalize(params, record_path=['answers'])
+    df_answer = df_answer[['value']]
+    df_use = pd.concat([df, df_answer], axis=1)
+    df_use = df_use[df_use['type'] == 4]
 
-'''
+    list_questionId = df_use['questionId'].values.tolist()
+    list_questionId = list(set(list_questionId))
+
+    # dataframe 전체 확인
+    # pd.set_option("display.max_rows", None, "display.max_columns", None)
+    # print(df_use)
+    # print('list')
+    # print(list_questionId)
+
+    keyword_result = pd.DataFrame(index=['questionId', 'keyword'])
+
+    temp_content = []
+
+    for k in list_questionId:
+        for h in range(len(df_use)):
+            df_temp = df_use.iloc[h, :]
+            if df_temp['questionId'] == k:
+                temp_content.append(df_temp['value'])
+
+        content = temp_content
+        data = {
+            "sentences": content
+        }
+
+        response = requests.post(url, data=json.dumps(data), headers=headers)
+        rescode = response.status_code
+
+        print(response)
+
+        if (rescode == 200):
+            print(response.text)
+
+        else:
+            print("Error : " + response.text)
+
+        use_temp = json.loads(response.text)
+        keyword_result = keyword_result.append({'questionId':k, 'keyword': use_temp['result']}, ignore_index=True)
+        temp_content = []
+
+    keyword_result = keyword_result.dropna(axis=0)
+    keyword_result = keyword_result.reset_index(drop=True)
+
+    return keyword_result
