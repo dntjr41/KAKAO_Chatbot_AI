@@ -34,7 +34,7 @@ def subject_sentiment(params):
     # print('list')
     # print(list_questionId)
 
-    sentiment_result = pd.DataFrame(index=['questionId', 'sentiment'])
+    sentiment_result = pd.DataFrame(index=['questionId', 'sentiment', 'negative', 'positive', 'neutral'])
     temp_content = ""
 
     for k in list_questionId:
@@ -59,7 +59,20 @@ def subject_sentiment(params):
             print("Error : " + response.text)
 
         use_temp = json.loads(response.text)
-        sentiment_result = sentiment_result.append({'questionId':k, 'sentiment': use_temp['document']}, ignore_index=True)
+        use_temp2 = pd.DataFrame(use_temp['document'])
+        confidence = use_temp2['confidence']
+
+        temp_sent = use_temp2.drop_duplicates(['sentiment'])
+        temp_sent = temp_sent.reset_index()
+        temp_sent = temp_sent['sentiment'].to_string()[5:]
+        temp_nega = confidence['negative']
+        temp_posi = confidence['positive']
+        temp_neut = confidence['neutral']
+
+        print(temp_sent)
+
+        sentiment_result = sentiment_result.append({'questionId':k, 'sentiment': temp_sent, 'negative': temp_nega,
+                                                    'positive': temp_posi, 'neutral': temp_neut}, ignore_index=True)
         temp_content = ""
 
     sentiment_result = sentiment_result.dropna(axis=0)

@@ -45,15 +45,17 @@ def subject_keyword(params):
     # print('list')
     # print(list_questionId)
 
-    keyword_result = pd.DataFrame(index=['questionId', 'keyword'])
+    keyword_result = pd.DataFrame(index=['questionId', 'title', 'keyword', 'weight'])
 
     temp_content = []
+    temp_title = ""
 
     for k in list_questionId:
         for h in range(len(df_use)):
             df_temp = df_use.iloc[h, :]
             if df_temp['questionId'] == k:
                 temp_content.append(df_temp['value'])
+                temp_title = df_temp['title']
 
         content = temp_content
         data = {
@@ -72,8 +74,13 @@ def subject_keyword(params):
             print("Error : " + response.text)
 
         use_temp = json.loads(response.text)
-        keyword_result = keyword_result.append({'questionId':k, 'keyword': use_temp['result']}, ignore_index=True)
+        use_temp2 = pd.DataFrame(use_temp['result'])
+        temp_key = use_temp2['keyword'].to_string()[5:]
+        temp_weight = use_temp2['weight'].to_string()[5:]
+
+        keyword_result = keyword_result.append({'questionId':k, 'title':temp_title, 'keyword': temp_key, 'weight':temp_weight}, ignore_index=True)
         temp_content = []
+        temp_title = ""
 
     keyword_result = keyword_result.dropna(axis=0)
     keyword_result = keyword_result.reset_index(drop=True)

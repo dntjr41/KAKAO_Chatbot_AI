@@ -62,8 +62,7 @@ def react_to_flask():
     result = pd.merge(subject_se, subject_ke)
     print(result)
 
-
-    return result.to_json()
+    return result.to_json(orient='records')
 
 '''
 @app.route('api/csv/<int:survey_id>', methods=['GET', 'POST'])
