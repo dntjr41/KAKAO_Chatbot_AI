@@ -11,8 +11,8 @@ from flask import Flask
 from flask_cors import CORS
 from flask_restx import Api, Resource, reqparse
 
-# import multiple_clustering
-# import multiple_prediction
+import multiple_clustering
+import multiple_prediction
 
 import subject_keyword
 import subject_sentiment
@@ -37,8 +37,8 @@ api = Api(app, version='1.0', title='Surmoonvey AI Document', description='Swagg
 test_api = api.namespace('test', description='조회 API')
 
 
-# conn = pymysql.connect(host='localhost', port=3307, user='root', password='12345', db='enc')
-conn = pymysql.connect(host='localhost', port=3306, user='root', password='1234', db='survey')
+conn = pymysql.connect(host='localhost', port=3306, user='root', password='12345', db='enc')
+#conn = pymysql.connect(host='localhost', port=3306, user='root', password='1234', db='survey')
 
 @app.route("/")
 def index():
@@ -64,8 +64,8 @@ def react_to_flask():
 
     return result.to_json(orient='records')
 
-'''
-@app.route('api/csv/<int:survey_id>', methods=['GET', 'POST'])
+
+@app.route('/api/csv/<int:survey_id>', methods=['GET', 'POST'])
 def csv(user_id=None, survey_id=None):
     output_stream = StringIO()
 
@@ -95,27 +95,35 @@ key_question : 1
 select_question : [ 2, 3, 4 ...] 
 """
 
-@app.route('api/clustering/<int:survey_id>/', methods=['GET', 'POST'])
+@app.route('/api/clustering/<int:survey_id>/', methods=['GET', 'POST'])
 def multiple_cl(user_id=None, survey_id=None):
     data = request.get_json()
 
-    sql = 'SELECT * FROM response where ', data
+    sql = "SELECT survey.survey_id, question.question_id, choice_response.choice_answer_id, choice_answer.answer_order " \
+          "FROM survey JOIN question ON survey.survey_id = question.survey_id " \
+          "JOIN choice_response ON question.question_id = choice_response.question_id" \
+          "JOIN choice_answer ON choice_answer.choice_answer_id = choice_answer.choice_answer_id" \
+          "WHERE survey.survey_id = '2';"
     result = pandas.read_sql_query(sql, conn)
     result.to_csv('result.csv', index=False)
 
-    # multiple_clustering()
+    multiple_clustering()
 
 
-@app.route('api/prediction/<int:survey_id>/', methods=['GET', 'POST'])
+@app.route('/api/prediction/<int:survey_id>/', methods=['GET', 'POST'])
 def multiple_pr(user_id=None, survey_id=None):
     data = request.get_json()
 
-    sql = 'SELECT * FROM response where ', data
+    sql = "SELECT survey.survey_id, question.question_id, question.question_order, choice_response.choice_answer_id, choice_answer.answer_order" \
+          "FROM survey JOIN question ON survey.survey_id = question.survey_id " \
+          "JOIN choice_response ON question.question_id = choice_response.question_id" \
+          "JOIN choice_answer ON choice_answer.choice_answer_id = choice_answer.choice_answer_id" \
+          "WHERE survey.survey_id = '2' AND question.question_order = '1' or '2' or '3' or '4' or '5';"
     result = pandas.read_sql_query(sql, conn)
     result.to_csv('result.csv', index=False)
 
-    # multiple_prediction()
-'''
+    multiple_prediction()
+
 
 if __name__ == "__main__":
     WSGIRequestHandler.protocol_version = "HTTP/1.1"

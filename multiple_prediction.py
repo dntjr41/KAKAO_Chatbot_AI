@@ -33,20 +33,36 @@ df = pd.read_csv("result.csv")
 df.drop_duplicates(keep='first', inplace=True)
 df.reset_index(inplace=True, drop=True)
 
+df = df[['question_order', 'answer_order']]
+
 column_list = df.columns
 print(column_list)
 
 df.head()
 df.info()
 
+print(df)
 """PREDICTION"""
 # Y가 타겟
 # X는 feature_columns = ['']  # json
-feature_columns = [1, 2, 3, 4, 5]
-X1 = df[feature_columns]
-Y1 = df[0]
+Y1 = df.where(df['question_order'] == 1).dropna()
+Y1 = Y1['answer_order'].reset_index(drop=True)
+print(Y1)
 
-X_features = X1
+X2 = df.where(df['question_order'] == 3).dropna()
+X2 = X2.sample(frac=1)
+X2 = X2['answer_order'].reset_index(drop=True)
+X3 = df.where(df['question_order'] == 4).dropna()
+X3 = X3.sample(frac=1)
+X3 = X3['answer_order'].reset_index(drop=True)
+X4 = df.where(df['question_order'] == 5).dropna()
+X4 = X4['answer_order'].reset_index(drop=True)
+X4 = X4.sample(frac=1)
+
+X = pd.concat([X2,X3,X4],axis = 1)
+print(X)
+
+X_features = X
 
 label_encoder = LabelEncoder()
 target_encoded = label_encoder.fit_transform(Y1)
@@ -59,16 +75,16 @@ X_train, X_test, y_train, y_test = train_test_split(X_features, target_encoded, 
 
 rf = RandomForestClassifier()
 
-random_grid_rf = {'max_features': ['auto', 'sqrt'], 'min_samples_split': [2, 3, 4],
+random_grid_rf = {'max_features': ['auto', 'sqrt'], 'min_samples_split': [5, 6, 7],
                   'min_samples_leaf': [1, 2, 3], 'max_depth': [4, 6, 8, 10, 12],
                   'n_estimators': [50, 100, 200, 250]}
 
-rf_random = GridSearchCV(estimator=rf, param_grid=random_grid_rf, cv=3)
-rf_params = rf_random.fit(X_train, y_train)
-print("Hyperparameters Chosen:", rf_params.best_params_)
+#rf_random = GridSearchCV(estimator=rf, param_grid=random_grid_rf, cv=3)
+#rf_params = rf_random.fit(X_train, y_train)
+#print("Hyperparameters Chosen:", rf_params.best_params_)
 
 # 데이터 피팅
-rf_classifier = RandomForestClassifier(max_depth=10, max_features='sqrt', min_samples_split=3, min_samples_leaf=1,
+rf_classifier = RandomForestClassifier(max_depth=10, max_features='sqrt', min_samples_split=5, min_samples_leaf=1,
                                        n_estimators=200)
 rf_classifier.fit(X_train, y_train)
 
@@ -113,7 +129,7 @@ print("Model F1 Score: ", round(f1_score(target_encoded, y_pred, average='weight
 """
 
 # 샘플데이터에 대한 예측 결과 값
-X_Samples = [] # React에서 유저가 값을 보낸 것을 JSON으로 받아야함
+X_Samples = [[3, 2, 1]] # React에서 유저가 값을 보낸 것을 JSON으로 받아야함
 probability = rf_classifier.predict_proba(X_Samples)
 print(probability)
 

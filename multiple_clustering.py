@@ -10,7 +10,7 @@ from sklearn import preprocessing
 from sklearn.model_selection import GridSearchCV
 from sklearn.model_selection import train_test_split
 from sklearn import preprocessing
-from autoelbow_rukabob import autoelbow
+from autoelbow_rupakbob import autoelbow
 
 """클러스터링/ 데이터 연관성을 보여줌
 클러스터링 - elbow 값을 기준으로 최적의 클러스터 개수를 자동으로 계산 후, 각 데이터를 군집화하여 csv로 리턴
@@ -57,7 +57,7 @@ df_cluster.to_csv('SurMoonVey_Clustering_result.csv', index=False)
 
 # 각 항목의 연관성 리턴
 sns.set(style="white")
-cor = regular_y2.corr()
+cor = df.corr()
 f, ax = plt.subplots(figsize=(12, 12))
 sns.heatmap(cor, annot=True)
 
