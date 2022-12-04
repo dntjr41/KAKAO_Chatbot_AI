@@ -65,7 +65,7 @@ def react_to_flask():
     return result.to_json(orient='records')
 
 
-@app.route('/api/csv/<int:survey_id>', methods=['GET', 'POST'])
+@app.route('/api/ai/csv/<int:survey_id>', methods=['GET', 'POST'])
 def csv(user_id=None, survey_id=None):
     output_stream = StringIO()
 
@@ -95,9 +95,8 @@ key_question : 1
 select_question : [ 2, 3, 4 ...] 
 """
 
-@app.route('/api/clustering/<int:survey_id>/', methods=['GET', 'POST'])
+@app.route('/api/ai/clustering/<int:survey_id>/', methods=['GET', 'POST'])
 def multiple_cl(user_id=None, survey_id=None):
-    data = request.get_json()
 
     sql = "SELECT survey.survey_id, question.question_id, choice_response.choice_answer_id, choice_answer.answer_order " \
           "FROM survey JOIN question ON survey.survey_id = question.survey_id " \
@@ -110,7 +109,26 @@ def multiple_cl(user_id=None, survey_id=None):
     multiple_clustering()
 
 
-@app.route('/api/prediction/<int:survey_id>/', methods=['GET', 'POST'])
+@app.route('/api/ai/get_image')
+def get_image():
+    if request.args.get('type') == '1':
+       filename = 'SurMoonVey_Corrleation.png'
+    else:
+       filename = 'SurMoonVey_importances.png'
+    return send_file(filename, mimetype='image/png')
+
+
+
+@app.route('/api/ai/clustering_csv', methods=['GET', 'POST'])
+def csv_file_download_with_file():
+    file_name = f"SurMoonVey_Clustering_result.csv"
+    return send_file(file_name,
+                     mimetype='text/csv',
+                     download_name='SurMoonVey_Clustering_result.csv',
+                     as_attachment=True)
+
+
+@app.route('/api/ai/prediction/<int:survey_id>/', methods=['GET', 'POST'])
 def multiple_pr(user_id=None, survey_id=None):
     data = request.get_json()
 
