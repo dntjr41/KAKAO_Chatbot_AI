@@ -133,6 +133,12 @@ X_Samples = [[3, 2, 1]] # React에서 유저가 값을 보낸 것을 JSON으로 
 probability = rf_classifier.predict_proba(X_Samples)
 print(probability)
 
+with open("TextFile.txt", "w", encoding="UTF-8") as file:
+    for i in range(probability.size):
+        print(i + 1, "번이 될 확률은 ", probability[0,i] * 100, "% 입니다")
+        file.write("{a} 번이 될 확률은  {b} % 입니다.\n".format(a = i+1, b= probability[0,i] * 100))
+
+file.close()
 
 # 각 항목의 중요도
 features = X_features.columns

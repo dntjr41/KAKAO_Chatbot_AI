@@ -109,6 +109,8 @@ def multiple_cl(user_id=None, survey_id=None):
     multiple_clustering()
 
 
+
+
 @app.route('/api/ai/get_image')
 def get_image():
     if request.args.get('type') == '1':
